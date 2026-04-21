@@ -92,8 +92,10 @@ docker compose -f docker-compose-airflow.yml up -d
 
 Place the following CSV files in `airflow/data/`:
 
-  - `jobstreet_data_jobs.csv`
-  - `jobstreet_salary.csv`
+  - `jobstreet_data_jobs.csv` - [jobstreet_data_jobs.csv](https://github.com/user-attachments/files/26927505/jobstreet_data_jobs.csv)
+
+  - `jobstreet_salary.csv` [jobstreet_salary.csv](https://github.com/user-attachments/files/26927512/jobstreet_salary.csv)
+
 
 ### 4\. Trigger Pipeline
 
