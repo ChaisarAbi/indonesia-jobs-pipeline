@@ -1,0 +1,58 @@
+services:
+  postgres:
+    image: postgres:13
+    container_name: airflow-postgres
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    volumes:
+      - ./airflow/postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  airflow-webserver:
+    build: .
+    container_name: airflow-webserver
+    depends_on:
+      - postgres
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__FERNET_KEY=gXE_SB9-EG7x4a8S9Kkchh6DIEEmSPyynXR0nuLjuBU=
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__WEBSERVER__SECRET_KEY=aventra_secret_key
+      - AIRFLOW__WEBSERVER__WARN_DEPLOYMENT_EXPOSURE=False
+      # Konfigurasi Log OpenSearch
+      - AIRFLOW__LOGGING__REMOTE_LOGGING=False
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./airflow/data:/opt/airflow/data
+    ports:
+      - "8080:8080"
+    command: webserver
+    restart: always
+
+  airflow-scheduler:
+    build: .
+    container_name: airflow-scheduler
+    depends_on:
+      - postgres
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__LOGGING__REMOTE_LOGGING=False
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./airflow/data:/opt/airflow/data
+    command: scheduler
+    restart: always
+
+networks:
+  default:
+    name: aventra-network
+    external: true

@@ -1,0 +1,18 @@
+# Data files - jangan upload ke GitHub
+airflow/data/
+airflow/logs/
+airflow/postgres_data/
+opensearch/data/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment
+.env
+*.env
+
+# OS files
+.DS_Store
+Thumbs.db

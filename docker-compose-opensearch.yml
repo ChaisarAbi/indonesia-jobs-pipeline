@@ -1,0 +1,41 @@
+version: '3'
+services:
+  opensearch-node:
+    image: opensearchproject/opensearch:latest
+    container_name: aventra-opensearch
+    environment:
+      - cluster.name=aventra-cluster
+      - node.name=aventra-node
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx1g" # Limit RAM 512MB-1GB
+      - DISABLE_INSTALL_DEMO_CONFIG=true # Matikan security demo buat awal (nanti kita amankan via Nginx)
+      - DISABLE_SECURITY_PLUGIN=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - ./opensearch/data:/usr/share/opensearch/data
+    ports:
+      - "9200:9200" # Port API
+    restart: always
+
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:latest
+    container_name: aventra-dashboards
+    environment:
+      - OPENSEARCH_HOSTS=["http://aventra-opensearch:9200"]
+      - DISABLE_SECURITY_PLUGIN=true
+      - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
+    ports:
+      - "5601:5601" # Port UI
+    restart: always
+
+networks:
+  default:
+    name: aventra-network
+    external: true
