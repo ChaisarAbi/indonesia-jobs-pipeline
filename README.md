@@ -7,7 +7,9 @@
 
 A production-grade ETL pipeline that collects, processes, and visualizes the Indonesian Data & Analytics job market using **Apache Airflow**, **OpenSearch**, and **Docker**.
 
-![Dashboard](https://search.aventra.my.id/goto/21afd65fee5df419d07fd5c84cd4c3d4)
+![Dashboard]
+<img width="1919" height="949" alt="image" src="https://github.com/user-attachments/assets/437ed75f-a7e3-48cf-8617-830555bb4c3a" />
+
 
 ## 🏗️ Architecture
 
