@@ -1,146 +1,130 @@
 # 🇮🇩 Indonesia Data Jobs Intelligence Pipeline
 
-A production-grade ETL pipeline that collects, processes, and visualizes
-the Indonesian Data & Analytics job market using Apache Airflow, OpenSearch,
-and Docker.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3120/)
+[![Airflow 2.10.0](https://img.shields.io/badge/Airflow-2.10.0-red.svg)](https://airflow.apache.org/)
+[![OpenSearch 3.6.0](https://img.shields.io/badge/OpenSearch-3.6.0-green.svg)](https://opensearch.org/)
+
+A production-grade ETL pipeline that collects, processes, and visualizes the Indonesian Data & Analytics job market using **Apache Airflow**, **OpenSearch**, and **Docker**.
 
 ![Dashboard](docs/dashboard.png)
 
 ## 🏗️ Architecture
 
-\`\`\`
-[Kaggle: JobStreet Data Jobs]     [Kaggle: JobStreet Salary]     [Remotive API]
-     555 job postings                  32,976 salary records        Remote jobs
-           ↓                                  ↓                         ↓
-      load_data_jobs               load_salary_data              fetch_remotive
-           ↓                                  ↓                         ↓
-           └──────────────────────────────────┴─────────────────────────┘
-                                              ↓
-                                    transform_and_merge
-                                    - Deduplication
-                                    - Salary parsing
-                                    - Skills extraction
-                                              ↓
-                                     load_to_opensearch
-                                     (Bulk API, idempotent)
-                                              ↓
-                                    OpenSearch Dashboards
-                                    - Top 10 Skills
-                                    - Avg Salary by Province
-                                    - Jobs by Level
-                                    - Jobs by City
-\`\`\`
+```mermaid
+graph TD
+    A[Kaggle: JobStreet Jobs] -->|load_data_jobs| D{Transform & Merge}
+    B[Kaggle: JobStreet Salary] -->|load_salary_data| D
+    C[Remotive API] -->|fetch_remotive| D
+    
+    D -->|Deduplication| E[Load to OpenSearch]
+    D -->|Salary Parsing| E
+    D -->|Skills Extraction| E
+    
+    E --> F[OpenSearch Dashboards]
+````
 
-## 📊 Key Insights
+## 📊 Key Insights (2024-2025)
 
-From 563 job postings in the Indonesian Data & Analytics market (2024-2025):
+From our analysis of **563+ job postings** in the Indonesian market:
 
-- **#1 Most demanded skill**: Excel (212 postings)
-- **#2**: SQL (159 postings)
-- **#3**: Power BI (97 postings)
-- **Highest paying province**: Kalimantan Selatan (~Rp 11 juta/month avg)
-- **Dominant level**: Mid Level positions dominate the market
-- **Job hotspot**: Jakarta accounts for majority of postings
+  - **Top Demanded Skills**: 🛠️ **Excel** (212), **SQL** (159), **Power BI** (97).
+  - **Highest Paying Region**: 💰 **Kalimantan Selatan** (\~Rp 11jt/month avg).
+  - **Market Trend**: Mid-Level positions dominate the current landscape.
+  - **Geographic Hotspot**: **Jakarta** remains the primary hub for data roles.
 
 ## 🛠️ Tech Stack
 
 | Component | Technology |
-|---|---|
-| Orchestration | Apache Airflow 2.10.0 |
-| Storage & Search | OpenSearch 3.6.0 |
-| Visualization | OpenSearch Dashboards |
-| Containerization | Docker + Docker Compose |
-| Language | Python 3.12 |
-| Data Processing | Pandas |
+| :--- | :--- |
+| **Orchestration** | Apache Airflow 2.10.0 |
+| **Storage & Search** | OpenSearch 3.6.0 |
+| **Visualization** | OpenSearch Dashboards |
+| **Containerization** | Docker + Docker Compose |
+| **Data Processing** | Python 3.12 (Pandas) |
 
 ## 📁 Project Structure
 
-\`\`\`
+```text
 indonesia-jobs-pipeline/
 ├── airflow/
-│   └── dags/
-│       └── indonesia_jobs_pipeline.py   # Main ETL DAG
-├── docker-compose-airflow.yml           # Airflow services
-├── docker-compose-opensearch.yml        # OpenSearch services
-├── Dockerfile                           # Custom Airflow image
-├── .gitignore
+│   ├── dags/
+│   │   └── indonesia_jobs_pipeline.py   # Main ETL DAG
+│   └── data/                            # Source CSV files
+├── docker-compose-airflow.yml            # Airflow services
+├── docker-compose-opensearch.yml         # OpenSearch services
+├── Dockerfile                            # Custom Airflow image
 └── README.md
-\`\`\`
+```
 
-## 🚀 How to Run
+## 🚀 Getting Started
 
 ### Prerequisites
-- Docker & Docker Compose
-- 4GB RAM minimum
-- Data files from Kaggle (see Data Sources)
 
-### 1. Clone the repository
-\`\`\`bash
-git clone https://github.com/chaisarabi/indonesia-jobs-pipeline.git
+  - Docker & Docker Compose
+  - 4GB RAM minimum allocated to Docker
+  - Kaggle Datasets (see Data Sources)
+
+### 1\. Installation
+
+```bash
+# Clone the repository
+git clone [https://github.com/chaisarabi/indonesia-jobs-pipeline.git](https://github.com/chaisarabi/indonesia-jobs-pipeline.git)
 cd indonesia-jobs-pipeline
-\`\`\`
 
-### 2. Create shared Docker network
-\`\`\`bash
+# Create shared Docker network
 docker network create aventra-network
-\`\`\`
+```
 
-### 3. Start OpenSearch
-\`\`\`bash
+### 2\. Start Services
+
+```bash
+# Spin up OpenSearch & Dashboards
 docker compose -f docker-compose-opensearch.yml up -d
-\`\`\`
 
-### 4. Download data files
-Place the following CSV files in \`airflow/data/\`:
-- \`jobstreet_data_jobs.csv\` — [Indonesia Data Jobs Dataset](https://www.kaggle.com/datasets)
-- \`jobstreet_salary.csv\` — [JobStreet Salary Dataset](https://www.kaggle.com/datasets)
-
-### 5. Start Airflow
-\`\`\`bash
+# Spin up Airflow
 docker compose -f docker-compose-airflow.yml up -d
-\`\`\`
+```
 
-### 6. Trigger the pipeline
-Open Airflow at \`http://localhost:8080\` and trigger \`indonesia_jobs_pipeline\`
+### 3\. Data Setup
 
-Or via CLI:
-\`\`\`bash
+Place the following CSV files in `airflow/data/`:
+
+  - `jobstreet_data_jobs.csv`
+  - `jobstreet_salary.csv`
+
+### 4\. Trigger Pipeline
+
+Access Airflow at `http://localhost:8080` or trigger via CLI:
+
+```bash
 docker exec airflow-scheduler airflow dags trigger indonesia_jobs_pipeline
-\`\`\`
+```
 
-### 7. View Dashboard
-Open OpenSearch Dashboards at \`http://localhost:5601\`
+## 📈 Pipeline Design
 
-## 📈 Pipeline Details
-
-### DAG Structure
-\`\`\`
-load_data_jobs ──┐
-                  ├──► transform_and_merge ──► load_to_opensearch
-load_salary_data─┤
-                  │
-fetch_remotive ───┘
-\`\`\`
-
-### Key Design Decisions
-- **Parallel extraction**: All 3 source tasks run simultaneously
-- **Idempotent loading**: Uses \`job_id\` as document ID — safe to re-run
-- **Bulk indexing**: Chunks of 500 documents for efficiency
-- **Data quality gate**: Pipeline fails loudly if zero records produced
+  - **Parallel Extraction**: Tasks run concurrently to optimize performance.
+  - **Idempotency**: Uses `job_id` as document ID to prevent duplicate data on retries.
+  - **Bulk Loading**: Efficiently indexes data in chunks of 500 documents.
+  - **Validation**: Integrated quality gates to ensure clean data flow.
 
 ## 📦 Data Sources
 
-| Source | Records | Description |
-|---|---|---|
-| Kaggle JobStreet Data Jobs | 555 | Data & Analytics jobs Aug-Sep 2025 |
-| Kaggle JobStreet Salary | 32,976 | Salary data across all job categories |
-| Remotive API | ~100 | Live remote tech jobs |
+| Source | Description |
+| :--- | :--- |
+| **Kaggle JobStreet** | Primary dataset for Indonesia Data Jobs (Aug-Sep 2025). |
+| **Remotive API** | Live tech job feed for remote positions. |
 
 ## 👤 Author
 
 **Chaisar Abi Prasetyo**
-- GitHub: [@chaisarabi](https://github.com/chaisarabi)
+
+  - **Portfolio**: [portfolio.aventra.my.id](https://www.google.com/search?q=https://portfolio.aventra.my.id)
+  - **GitHub**: [@chaisarabi](https://github.com/chaisarabi)
 
 ## 📝 License
 
-MIT License
+This project is licensed under the [MIT License](https://www.google.com/search?q=LICENSE).
+
+```
+```
