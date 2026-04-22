@@ -1,0 +1,50 @@
+name: CD - Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to VPS
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'ENDSSH'
+            set -e
+            
+            echo "📦 Pulling latest code..."
+            cd /opt/aventra-data
+            git pull origin main
+            
+            echo "🔄 Restarting Airflow..."
+            docker compose -f docker-compose-airflow.yml up -d --no-deps \
+              airflow-webserver airflow-scheduler
+            
+            echo "⏳ Waiting for Airflow to be healthy..."
+            sleep 20
+            
+            echo "🏥 Health check..."
+            curl -f http://localhost:8080/health || exit 1
+            
+            echo "✅ Deploy successful!"
+          ENDSSH
+
+      - name: Notify success
+        if: success()
+        run: echo "🎉 Deployment to production successful!"
+
+      - name: Notify failure  
+        if: failure()
+        run: echo "💥 Deployment failed! Check logs above."
