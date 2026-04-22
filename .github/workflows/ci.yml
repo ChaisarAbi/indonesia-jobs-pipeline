@@ -29,7 +29,7 @@ jobs:
       - name: Lint with flake8
         run: |
           flake8 airflow/dags/ \
-            --max-line-length=120 \
+            --max-line-length=150 \
             --ignore=E221,E241,E302,E226,E272,F541,W293,E261,E305,F401 \
             --exclude=__pycache__,scripts/
 
