@@ -254,7 +254,6 @@ def check_log_anomaly(**context):
     try:
         client = get_opensearch_client()
 
-        # Query error logs dari semua index dalam 30 menit terakhir
         response = client.search(
             index="*",
             body={
@@ -278,7 +277,15 @@ def check_log_anomaly(**context):
                             {"match": {"message": "ERROR"}},
                             {"match": {"message": "CRITICAL"}},
                         ],
-                        "minimum_should_match": 1
+                        "minimum_should_match": 1,
+                        "must_not": [
+                            {"match": {"log": "sshd"}},
+                            {"match": {"log": "kex_exchange"}},
+                            {"match": {"log": "Protocol major versions"}},
+                            {"match": {"log": "Disconnected from"}},
+                            {"match": {"log": "Invalid user"}},
+                            {"match": {"log": "Failed password"}},
+                        ]
                     }
                 },
             },
