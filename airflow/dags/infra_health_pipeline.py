@@ -26,7 +26,7 @@ DOMAINS = [
     "portfolio.aventra.my.id",
 ]
 
-UPTIME_OK_CODES = [200, 301, 302, 401, 403]
+UPTIME_OK_CODES = [200, 204, 301, 302, 401, 403]
 SSL_WARN_DAYS   = 30
 ERROR_THRESHOLD = 10
 
