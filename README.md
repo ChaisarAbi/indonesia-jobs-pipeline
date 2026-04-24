@@ -18,22 +18,11 @@ A **production-grade data & infrastructure platform** built on a single Linux VP
 
 ```mermaid
 graph TD
-    A((Internet)) --> B[Nginx<br/>Reverse Proxy + SSL]
-    
-    B --> C[Airflow<br/>Orchestration]
-    B --> D[OpenSearch<br/>Store + Search]
-    B --> E[Grafana<br/>Metrics UI]
-    
-    C --> F[2 ETL Pipelines<br/>├── Jobs Pipeline<br/>└── Infra Health]
-    D --> G[2 Indexes<br/>├── indonesia-jobs<br/>└── infra-health]
-    
-    H[Prometheus<br/>Metrics] --> E
-    I[Fluent Bit<br/>Logs] --> H
-    
-    F --> J[WAHA<br/>WhatsApp API]
-    G --> K[Dashboards<br/>Visualizations]
-    
-    J --> L((Alert to Phone))
+    A[Kaggle: JobStreet Data Jobs\n555 postings] -->|load_data_jobs| D{Transform & Merge}
+    B[Kaggle: JobStreet Salary\n32976 records] -->|load_salary_data| D
+    C[Remotive API\nLive remote jobs] -->|fetch_remotive| D
+    D -->|Deduplication + Salary Parsing + Skills Extraction| E[Load to OpenSearch]
+    E --> F[OpenSearch Dashboards]
 ```
 ## Continue to the Pipelines
 
