@@ -1,134 +1,253 @@
+Berikut adalah versi README yang sudah dirapikan, dioptimalkan, dan **siap untuk langsung kamu Copy & Paste**. 
+
+Saya telah membersihkan karakter spasi tersembunyi (non-breaking spaces) yang sering merusak format saat di-copy, memperbaiki tata letak tabel, dan menyempurnakan struktur visualnya agar terlihat sangat profesional di repositori GitHub kamu.
+
+```markdown
 # 🇮🇩 Indonesia Data Jobs Intelligence Pipeline
 
+[![CI](https://github.com/ChaisarAbi/indonesia-jobs-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/ChaisarAbi/indonesia-jobs-pipeline/actions/workflows/ci.yml)
+[![CD](https://github.com/ChaisarAbi/indonesia-jobs-pipeline/actions/workflows/deploy.yml/badge.svg)](https://github.com/ChaisarAbi/indonesia-jobs-pipeline/actions/workflows/deploy.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3120/)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 [![Airflow 2.10.0](https://img.shields.io/badge/Airflow-2.10.0-red.svg)](https://airflow.apache.org/)
 [![OpenSearch 3.6.0](https://img.shields.io/badge/OpenSearch-3.6.0-green.svg)](https://opensearch.org/)
 
-A production-grade ETL pipeline that collects, processes, and visualizes the Indonesian Data & Analytics job market using **Apache Airflow**, **OpenSearch**, and **Docker**.
+A **production-grade data & infrastructure platform** built on a single Linux VPS. Features two automated Airflow pipelines, a full observability stack, CI/CD with GitHub Actions, WhatsApp alerting, and Kubernetes manifests.
 
-![Dashboard]
-<img width="1919" height="949" alt="image" src="https://github.com/user-attachments/assets/437ed75f-a7e3-48cf-8617-830555bb4c3a" />
+![Dashboard](https://github.com/user-attachments/assets/437ed75f-a7e3-48cf-8617-830555bb4c3a)
 
+---
 
-## 🏗️ Architecture
+## 🏗️ System Architecture
+
+```text
+                         Internet
+                            ↓
+                Nginx (Reverse Proxy + SSL)
+                            ↓
+         ┌──────────────────┼──────────────────┐
+         ↓                  ↓                  ↓
+      Airflow           OpenSearch          Grafana
+   (Orchestration)    (Store + Search)    (Metrics UI)
+         ↓                  ↓                  ↑
+   2 ETL Pipelines      2 Indexes          Prometheus
+   ├── Jobs Pipeline    ├── indonesia-jobs  (Metrics)
+   └── Infra Health     └── infra-health       ↑
+         ↓                  ↓              Fluent Bit
+        WAHA            Dashboards           (Logs)
+   (WhatsApp API)    (Visualizations)
+         ↓
+   Alert to Phone
+```
+
+---
+
+## 📊 Pipeline 1 — Indonesia Data Jobs Intelligence
+
+Collects, transforms, and indexes Indonesian job market data from multiple sources to provide actionable insights.
 
 ```mermaid
 graph TD
-    A[Kaggle: JobStreet Jobs] -->|load_data_jobs| D{Transform & Merge}
-    B[Kaggle: JobStreet Salary] -->|load_salary_data| D
-    C[Remotive API] -->|fetch_remotive| D
-    
-    D -->|Deduplication| E[Load to OpenSearch]
-    D -->|Salary Parsing| E
-    D -->|Skills Extraction| E
-    
+    A[Kaggle: JobStreet Data Jobs\n555 postings] -->|load_data_jobs| D{Transform & Merge}
+    B[Kaggle: JobStreet Salary\n32976 records] -->|load_salary_data| D
+    C[Remotive API\nLive remote jobs] -->|fetch_remotive| D
+    D -->|Deduplication + Salary Parsing + Skills Extraction| E[Load to OpenSearch]
     E --> F[OpenSearch Dashboards]
-````
+```
 
-## 📊 Key Insights (2024-2025)
+### Key Insights from 563 Job Postings
 
-From our analysis of **563+ job postings** in the Indonesian market:
+| Insight | Finding |
+| :--- | :--- |
+| 🛠️ **Most Demanded Skill** | Excel (212 postings), SQL (159), Power BI (97) |
+| 💰 **Highest Paying Region** | Kalimantan Selatan (~Rp 11jt/month avg) |
+| 📈 **Market Trend** | Mid-Level positions dominate |
+| 🏙️ **Geographic Hotspot** | Jakarta remains the primary hub |
 
-  - **Top Demanded Skills**: 🛠️ **Excel** (212), **SQL** (159), **Power BI** (97).
-  - **Highest Paying Region**: 💰 **Kalimantan Selatan** (\~Rp 11jt/month avg).
-  - **Market Trend**: Mid-Level positions dominate the current landscape.
-  - **Geographic Hotspot**: **Jakarta** remains the primary hub for data roles.
+---
+
+## 🔍 Pipeline 2 — Infrastructure Health Monitor
+
+Monitors all production subdomains every 30 minutes and sends real-time WhatsApp alerts when issues are detected.
+
+```mermaid
+graph TD
+    A[check_uptime\n7 subdomains] --> D{aggregate_and_index}
+    B[check_ssl\nExpiry monitoring] --> D
+    C[check_log_anomaly\nError detection] --> D
+    D --> E[OpenSearch: infra-health]
+    D --> F[WhatsApp Alert via WAHA]
+```
+
+### Monitored Domains
+- `air.aventra.my.id` — Airflow Dashboard
+- `grafana.aventra.my.id` — Grafana
+- `search.aventra.my.id` — OpenSearch Dashboards
+- `n8n.aventra.my.id` — n8n Automation
+- `waha.aventra.my.id` — WhatsApp API
+- `waha3.aventra.my.id` — Infrastructure Alerting
+- `portfolio.aventra.my.id` — Portfolio
+
+### Alert Example
+```text
+🚨 Aventra Infrastructure Alert
+2026-04-23 07:30 UTC
+
+Issues Detected:
+⚠️ 2 errors found in logs (last 30min)
+
+Summary:
+✅ Uptime: 7/7 domains up
+🔒 SSL: 0 certificates need attention
+📋 Logs: 1 anomalies detected
+```
+
+### 🛡️ Real Incident Detected & Resolved
+The pipeline successfully detected SSH brute force attacks from bots in Russia, Korea, and the US (69 failed attempts). The incident was resolved by implementing **Fail2Ban**, resulting in 4 malicious IPs being banned automatically within minutes.
+
+---
 
 ## 🛠️ Tech Stack
 
-| Component | Technology |
-| :--- | :--- |
-| **Orchestration** | Apache Airflow 2.10.0 |
-| **Storage & Search** | OpenSearch 3.6.0 |
-| **Visualization** | OpenSearch Dashboards |
-| **Containerization** | Docker + Docker Compose |
-| **Data Processing** | Python 3.12 (Pandas) |
+| Component | Technology | Purpose |
+| :--- | :--- | :--- |
+| **Orchestration** | Apache Airflow 2.10.0 | Pipeline scheduling & monitoring |
+| **Storage & Search**| OpenSearch 3.6.0 | Data indexing & querying |
+| **Visualization** | OpenSearch Dashboards | Data visualization |
+| **Metrics** | Prometheus + Grafana | Infrastructure monitoring |
+| **Logs** | Fluent Bit | Log shipping to OpenSearch |
+| **Alerting** | WAHA (WhatsApp API) | Real-time WhatsApp notifications |
+| **Reverse Proxy** | Nginx + Certbot | SSL termination & routing |
+| **Containerization**| Docker + Docker Compose | Service orchestration |
+| **CI/CD** | GitHub Actions | Automated testing & deployment |
+| **K8s** | Kubernetes (k3s/Docker Desktop) | K8s manifests & deployment |
+| **Language** | Python 3.12 | ETL logic & data processing |
+| **Security** | Fail2Ban | SSH intrusion prevention |
+
+---
 
 ## 📁 Project Structure
 
 ```text
 indonesia-jobs-pipeline/
+├── .github/
+│   └── workflows/
+│       ├── ci.yml              # Lint + syntax validation on every push
+│       └── deploy.yml          # Auto-deploy to VPS on merge to main
 ├── airflow/
-│   ├── dags/
-│   │   └── indonesia_jobs_pipeline.py   # Main ETL DAG
-│   └── data/                            # Source CSV files
-├── docker-compose-airflow.yml            # Airflow services
-├── docker-compose-opensearch.yml         # OpenSearch services
-├── Dockerfile                            # Custom Airflow image
+│   └── dags/
+│       ├── indonesia_jobs_pipeline.py    # Pipeline 1: Jobs ETL
+│       └── infra_health_pipeline.py      # Pipeline 2: Infra monitoring
+├── k8s/                                  # Kubernetes manifests
+│   ├── 01-pod.yaml
+│   ├── 02-deployment.yaml
+│   ├── 03-service.yaml
+│   ├── 04-configmap.yaml
+│   ├── 05-secret.yaml
+│   └── 06-full-app.yaml
+├── docker-compose-airflow.yml
+├── docker-compose-opensearch.yml
+├── Dockerfile
 └── README.md
 ```
+
+---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
+- Docker & Docker Compose
+- Minimum 4GB RAM allocated
+- Kaggle account (for datasets)
 
-  - Docker & Docker Compose
-  - 4GB RAM minimum allocated to Docker
-  - Kaggle Datasets (see Data Sources)
-
-### 1\. Installation
-
+### 1. Clone & Setup Network
 ```bash
-# Clone the repository
-git clone [https://github.com/chaisarabi/indonesia-jobs-pipeline.git](https://github.com/chaisarabi/indonesia-jobs-pipeline.git)
+git clone [https://github.com/ChaisarAbi/indonesia-jobs-pipeline.git](https://github.com/ChaisarAbi/indonesia-jobs-pipeline.git)
 cd indonesia-jobs-pipeline
-
-# Create shared Docker network
 docker network create aventra-network
 ```
 
-### 2\. Start Services
-
+### 2. Start OpenSearch
 ```bash
-# Spin up OpenSearch & Dashboards
 docker compose -f docker-compose-opensearch.yml up -d
+```
 
-# Spin up Airflow
+### 3. Download Data Files
+Place these CSV files in the `airflow/data/` directory:
+- `jobstreet_data_jobs.csv` — Indonesia Data & Analytics jobs
+- `jobstreet_salary.csv` — Salary dataset
+
+### 4. Start Airflow
+```bash
 docker compose -f docker-compose-airflow.yml up -d
 ```
 
-### 3\. Data Setup
+### 5. Trigger Pipelines
+Access Airflow at `http://localhost:8080` and trigger:
+- `indonesia_jobs_pipeline` — Jobs ETL
+- `infra_health_pipeline` — Infrastructure monitoring
 
-Place the following CSV files in `airflow/data/`:
+---
 
-  - `jobstreet_data_jobs.csv` - [jobstreet_data_jobs.csv](https://github.com/user-attachments/files/26927505/jobstreet_data_jobs.csv)
+## ⚙️ CI/CD Pipeline
 
-  - `jobstreet_salary.csv` [jobstreet_salary.csv](https://github.com/user-attachments/files/26927512/jobstreet_salary.csv)
+Every push to this repository triggers automated workflows via GitHub Actions:
 
+- **Push to any branch:** <br> `CI` → Python linting (flake8) + DAG syntax validation.
+- **Push to `main`:** <br> `CD` → SSH to VPS → git pull → restart Airflow → health check.
 
-### 4\. Trigger Pipeline
+You can monitor pipeline executions in the [Actions tab](https://github.com/ChaisarAbi/indonesia-jobs-pipeline/actions).
 
-Access Airflow at `http://localhost:8080` or trigger via CLI:
+---
+
+## ☸️ Kubernetes
+
+Kubernetes manifests are available in the `k8s/` directory (tested with Docker Desktop Kubernetes v1.32.2).
 
 ```bash
-docker exec airflow-scheduler airflow dags trigger indonesia_jobs_pipeline
+# Deploy full application
+kubectl apply -f k8s/06-full-app.yaml
+
+# Verify deployment
+kubectl get all
+curl http://localhost:9090/health
 ```
+*The manifests demonstrate standard K8s objects including Pods, Deployments, Services, ConfigMaps, Secrets, health probes, resource limits, and rolling updates.*
 
-## 📈 Pipeline Design
+---
 
-  - **Parallel Extraction**: Tasks run concurrently to optimize performance.
-  - **Idempotency**: Uses `job_id` as document ID to prevent duplicate data on retries.
-  - **Bulk Loading**: Efficiently indexes data in chunks of 500 documents.
-  - **Validation**: Integrated quality gates to ensure clean data flow.
+## 📈 Pipeline Design Principles
+
+| Principle | Implementation |
+| :--- | :--- |
+| **Idempotency** | Uses `job_id` as document ID — safe to re-run without duplication. |
+| **Parallel Execution** | All 3 source extraction tasks run simultaneously. |
+| **Bulk Loading** | Data is indexed in efficient chunks of 500 documents. |
+| **Data Quality Gates** | Pipeline fails loudly if zero records are produced. |
+| **Retry Logic** | Configured for 3 retries with a 5-minute delay on failure. |
+
+---
 
 ## 📦 Data Sources
 
-| Source | Description |
-| :--- | :--- |
-| **Kaggle JobStreet** | Primary dataset for Indonesia Data Jobs (Aug-Sep 2025). |
-| **Remotive API** | Live tech job feed for remote positions. |
+| Source | Records | Description |
+| :--- | :--- | :--- |
+| **Kaggle JobStreet Data Jobs** | 555 | Data & Analytics jobs (Aug-Sep 2025) |
+| **Kaggle JobStreet Salary** | 32,976 | Salary data across all job categories |
+| **Remotive API** | ~100 | Live remote tech jobs (free, no auth required) |
+
+---
 
 ## 👤 Author
 
-**Chaisar Abi Prasetyo**
+**Chaisar Abi Prasetyo** — DevOps & Infrastructure Engineer
 
-  - **Portfolio**: [portfolio.aventra.my.id](https://www.google.com/search?q=https://portfolio.aventra.my.id)
-  - **GitHub**: [@chaisarabi](https://github.com/chaisarabi)
+- 🔗 **GitHub**: [@ChaisarAbi](https://github.com/ChaisarAbi)
+- 🌐 **Portfolio**: [portfolio.aventra.my.id](https://portfolio.aventra.my.id)
+
+---
 
 ## 📝 License
 
-This project is licensed under the [MIT License](https://www.google.com/search?q=LICENSE).
-
-```
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
 ```
