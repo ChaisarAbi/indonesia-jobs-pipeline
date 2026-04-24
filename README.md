@@ -34,6 +34,7 @@ flowchart TD
     G --> K[Dashboards<br/>Visualizations]
     
     J --> L((Alert to Phone))
+    ```
 ---
 
 ## 📊 Pipeline 1 — Indonesia Data Jobs Intelligence
