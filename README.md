@@ -1,7 +1,3 @@
-Berikut adalah versi README yang sudah dirapikan, dioptimalkan, dan **siap untuk langsung kamu Copy & Paste**. 
-
-Saya telah membersihkan karakter spasi tersembunyi (non-breaking spaces) yang sering merusak format saat di-copy, memperbaiki tata letak tabel, dan menyempurnakan struktur visualnya agar terlihat sangat profesional di repositori GitHub kamu.
-
 ```markdown
 # 🇮🇩 Indonesia Data Jobs Intelligence Pipeline
 
@@ -20,26 +16,24 @@ A **production-grade data & infrastructure platform** built on a single Linux VP
 
 ## 🏗️ System Architecture
 
-```text
-                         Internet
-                            ↓
-                Nginx (Reverse Proxy + SSL)
-                            ↓
-         ┌──────────────────┼──────────────────┐
-         ↓                  ↓                  ↓
-      Airflow           OpenSearch          Grafana
-   (Orchestration)    (Store + Search)    (Metrics UI)
-         ↓                  ↓                  ↑
-   2 ETL Pipelines      2 Indexes          Prometheus
-   ├── Jobs Pipeline    ├── indonesia-jobs  (Metrics)
-   └── Infra Health     └── infra-health       ↑
-         ↓                  ↓              Fluent Bit
-        WAHA            Dashboards           (Logs)
-   (WhatsApp API)    (Visualizations)
-         ↓
-   Alert to Phone
-```
-
+```mermaid
+flowchart TD
+    A((Internet)) --> B[Nginx<br/>Reverse Proxy + SSL]
+    
+    B --> C[Airflow<br/>Orchestration]
+    B --> D[OpenSearch<br/>Store + Search]
+    B --> E[Grafana<br/>Metrics UI]
+    
+    C --> F[2 ETL Pipelines<br/>├── Jobs Pipeline<br/>└── Infra Health]
+    D --> G[2 Indexes<br/>├── indonesia-jobs<br/>└── infra-health]
+    
+    H[Prometheus<br/>Metrics] --> E
+    I[Fluent Bit<br/>Logs] --> H
+    
+    F --> J[WAHA<br/>WhatsApp API]
+    G --> K[Dashboards<br/>Visualizations]
+    
+    J --> L((Alert to Phone))
 ---
 
 ## 📊 Pipeline 1 — Indonesia Data Jobs Intelligence
