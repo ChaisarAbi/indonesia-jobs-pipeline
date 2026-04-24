@@ -34,7 +34,8 @@ flowchart TD
     G --> K[Dashboards<br/>Visualizations]
     
     J --> L((Alert to Phone))
-    ```
+```
+
 ---
 
 ## 📊 Pipeline 1 — Indonesia Data Jobs Intelligence
@@ -63,7 +64,7 @@ graph TD
 
 ## 🔍 Pipeline 2 — Infrastructure Health Monitor
 
-Monitors all production subdomains every 30 minutes and sends real-time WhatsApp alerts when issues are detected.
+Monitors all production subdomains every 30 minutes and sends real-time WhatsApp alerts ketika terjadi kendala.
 
 ```mermaid
 graph TD
@@ -157,7 +158,7 @@ indonesia-jobs-pipeline/
 
 ### 1. Clone & Setup Network
 ```bash
-git clone [https://github.com/ChaisarAbi/indonesia-jobs-pipeline.git](https://github.com/ChaisarAbi/indonesia-jobs-pipeline.git)
+git clone https://github.com/ChaisarAbi/indonesia-jobs-pipeline.git
 cd indonesia-jobs-pipeline
 docker network create aventra-network
 ```
@@ -168,30 +169,23 @@ docker compose -f docker-compose-opensearch.yml up -d
 ```
 
 ### 3. Download Data Files
-Place these CSV files in the `airflow/data/` directory:
-- `jobstreet_data_jobs.csv` — Indonesia Data & Analytics jobs
-- `jobstreet_salary.csv` — Salary dataset
+Place ini di folder `airflow/data/`:
+- `jobstreet_data_jobs.csv`
+- `jobstreet_salary.csv`
 
 ### 4. Start Airflow
 ```bash
 docker compose -f docker-compose-airflow.yml up -d
 ```
 
-### 5. Trigger Pipelines
-Access Airflow at `http://localhost:8080` and trigger:
-- `indonesia_jobs_pipeline` — Jobs ETL
-- `infra_health_pipeline` — Infrastructure monitoring
-
 ---
 
 ## ⚙️ CI/CD Pipeline
 
-Every push to this repository triggers automated workflows via GitHub Actions:
+Setiap push ke repository ini akan memicu workflow otomatis:
 
-- **Push to any branch:** <br> `CI` → Python linting (flake8) + DAG syntax validation.
-- **Push to `main`:** <br> `CD` → SSH to VPS → git pull → restart Airflow → health check.
-
-You can monitor pipeline executions in the [Actions tab](https://github.com/ChaisarAbi/indonesia-jobs-pipeline/actions).
+- **Push ke branch mana pun:** <br> `CI` → Python linting (flake8) + DAG syntax validation.
+- **Push ke `main`:** <br> `CD` → SSH ke VPS → git pull → restart Airflow → health check.
 
 ---
 
@@ -240,9 +234,4 @@ curl http://localhost:9090/health
 - 🔗 **GitHub**: [@ChaisarAbi](https://github.com/ChaisarAbi)
 - 🌐 **Portfolio**: [portfolio.aventra.my.id](https://portfolio.aventra.my.id)
 
----
-
-## 📝 License
-
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
 ```
