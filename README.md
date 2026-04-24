@@ -23,8 +23,8 @@ graph TD
     B --> D[OpenSearch<br/>Store + Search]
     B --> E[Grafana<br/>Metrics UI]
     
-    C --> F[2 ETL Pipelines<br/>Jobs Pipeline<br/>Infra Health]
-    D --> G[2 Indexes<br/>indonesia-jobs<br/>infra-health]
+    C --> F[2 ETL Pipelines<br/>- Jobs Pipeline<br/>- Infra Health]
+    D --> G[2 Indexes<br/>- indonesia-jobs<br/>- infra-health]
     
     H[Prometheus<br/>Metrics] --> E
     I[Fluent Bit<br/>Logs] --> H
