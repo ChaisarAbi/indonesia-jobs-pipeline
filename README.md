@@ -17,7 +17,7 @@ A **production-grade data & infrastructure platform** built on a single Linux VP
 ## 🏗️ System Architecture
 
 ```mermaid
-flowchart TD
+graph TD
     A((Internet)) --> B[Nginx<br/>Reverse Proxy + SSL]
     
     B --> C[Airflow<br/>Orchestration]
