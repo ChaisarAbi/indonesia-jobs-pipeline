@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector:
+    app: nginx           # Cari pods dengan label app=nginx
+
+  ports:
+  - protocol: TCP
+    port: 8080           # Port yang diexpose ke luar
+    targetPort: 80       # Port di dalam container
+
+  type: LoadBalancer     # Expose ke localhost

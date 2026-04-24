@@ -1,0 +1,23 @@
+# 01-pod.yaml
+# Ini adalah manifest paling sederhana — satu Pod
+
+apiVersion: v1        # v1 adalah API version untuk Pod
+kind: Pod             # Tipe object: Pod
+metadata:
+  name: my-first-pod  # Nama pod — harus unik di namespace
+  labels:             # Labels = tag untuk identify pod
+    app: my-app       # Key: value — bebas namanya
+    env: learning     # Bisa tambah sebanyak mau
+spec:
+  containers:                    # List containers dalam pod
+  - name: nginx                  # Nama container
+    image: nginx:latest          # Docker image yang dipakai
+    ports:
+    - containerPort: 80          # Port yang di-expose container
+    resources:                   # Batasi resource usage
+      requests:                  # Minimum yang dibutuhkan
+        memory: "64Mi"           # 64 Megabytes RAM
+        cpu: "100m"              # 100 millicores = 0.1 CPU
+      limits:                    # Maximum yang boleh dipakai
+        memory: "128Mi"          # 128 Megabytes RAM
+        cpu: "200m"              # 200 millicores = 0.2 CPU

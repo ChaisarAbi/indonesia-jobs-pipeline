@@ -1,0 +1,138 @@
+# ── ConfigMap ──────────────────────────────────────────────────
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aventra-config
+  namespace: default
+data:
+  APP_ENV: "production"
+  APP_NAME: "Aventra"
+  nginx.conf: |
+    server {
+        listen 80;
+        server_name localhost;
+
+        location / {
+            return 200 '{"status":"ok","app":"Aventra","env":"production"}\n';
+            add_header Content-Type application/json;
+        }
+
+        location /health {
+            return 200 '{"status":"healthy"}\n';
+            add_header Content-Type application/json;
+        }
+
+        location /info {
+            return 200 '{"app":"Aventra K8s","version":"1.0.0","pods":"running"}\n';
+            add_header Content-Type application/json;
+        }
+    }
+
+---
+# ── Secret ─────────────────────────────────────────────────────
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aventra-secrets
+  namespace: default
+type: Opaque
+stringData:
+  API_KEY: "aventra-production-key"
+  DB_PASSWORD: "supersecret123"
+
+---
+# ── Deployment ─────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aventra-app
+  namespace: default
+  labels:
+    app: aventra
+    version: "1.0.0"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: aventra
+  template:
+    metadata:
+      labels:
+        app: aventra
+        version: "1.0.0"
+    spec:
+      containers:
+      - name: aventra
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+
+        # Inject dari ConfigMap
+        envFrom:
+        - configMapRef:
+            name: aventra-config
+
+        # Inject dari Secret
+        env:
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: aventra-secrets
+              key: API_KEY
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: aventra-secrets
+              key: DB_PASSWORD
+
+        # Mount nginx config dari ConfigMap
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d/default.conf
+          subPath: nginx.conf
+
+        # Resource limits
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+
+        # Health checks — K8s gunakan ini untuk tau pod sehat
+        livenessProbe:         # Kalau gagal → restart pod
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 30
+
+        readinessProbe:        # Kalau gagal → stop send traffic
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: aventra-config
+
+---
+# ── Service ────────────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: aventra-service
+  namespace: default
+spec:
+  selector:
+    app: aventra
+  ports:
+  - name: http
+    protocol: TCP
+    port: 9090
+    targetPort: 80
+  type: LoadBalancer

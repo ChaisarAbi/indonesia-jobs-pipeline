@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+data:
+  # Key: value — ini akan jadi environment variables
+  APP_ENV: "production"
+  APP_NAME: "Aventra"
+  LOG_LEVEL: "info"
+
+  # Bisa juga berisi file content
+  nginx.conf: |
+    server {
+        listen 80;
+        server_name localhost;
+
+        location / {
+            return 200 'Hello from Aventra K8s!\n';
+            add_header Content-Type text/plain;
+        }
+
+        location /health {
+            return 200 'healthy\n';
+            add_header Content-Type text/plain;
+        }
+    }
