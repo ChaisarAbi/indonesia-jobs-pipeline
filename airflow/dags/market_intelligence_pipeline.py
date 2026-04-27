@@ -67,28 +67,28 @@ STOCKS = {
 # ── Crypto ──────────────────────────────────────────────────────
 CRYPTO = {
     # Major
-    "BTC-USD":  "Bitcoin",
-    "ETH-USD":  "Ethereum",
-    "BNB-USD":  "BNB",
-    "SOL-USD":  "Solana",
-    "XRP-USD":  "XRP",
-    "ADA-USD":  "Cardano",
+    "BTC-USD": "Bitcoin",
+    "ETH-USD": "Ethereum",
+    "BNB-USD": "BNB",
+    "SOL-USD": "Solana",
+    "XRP-USD": "XRP",
+    "ADA-USD": "Cardano",
     "AVAX-USD": "Avalanche",
-    "DOT-USD":  "Polkadot",
-    "MATIC-USD":"Polygon",
+    "DOT-USD": "Polkadot",
+    "MATIC-USD": "Polygon",
     "LINK-USD": "Chainlink",
 
     # Popular di Indonesia
     "DOGE-USD": "Dogecoin",
     "SHIB-USD": "Shiba Inu",
-    "TRX-USD":  "TRON",
-    "LTC-USD":  "Litecoin",
-    "BCH-USD":  "Bitcoin Cash",
+    "TRX-USD": "TRON",
+    "LTC-USD": "Litecoin",
+    "BCH-USD": "Bitcoin Cash",
 
     # DeFi
-    "UNI-USD":  "Uniswap",
+    "UNI-USD": "Uniswap",
     "AAVE-USD": "Aave",
-    "CRV-USD":  "Curve",
+    "CRV-USD": "Curve",
 }
 
 # ── RSS News Sources ─────────────────────────────────────────────
@@ -500,7 +500,7 @@ def fetch_and_analyze_news(**context):
             for entry in feed.entries[:15]:
                 title   = entry.get("title", "").strip()
                 summary = entry.get("summary",
-                          entry.get("description", "")).strip()
+                        entry.get("description", "")).strip()
                 link    = entry.get("link", "")
 
                 if not title:
@@ -754,10 +754,11 @@ def send_alerts(**context):
             summary.get('stocks_indexed', 0) +
             summary.get('crypto_indexed', 0)
         )
-        market_mood = "🟢 BULLISH" if (
-            summary.get('positive_news', 0) >
-            summary.get('negative_news', 0)
-        ) else "🔴 BEARISH"
+        market_mood = (
+    "🟢 BULLISH"
+    if summary.get('positive_news', 0) > summary.get('negative_news', 0)
+    else "🔴 BEARISH"
+)
 
         report = (
             f"📊 *Aventra Market Intelligence Report*\n"
