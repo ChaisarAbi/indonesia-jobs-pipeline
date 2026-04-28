@@ -309,13 +309,13 @@ def fetch_stock_prices(**context):
                     "name":    name,
                     "message": (
                         f"📉 *{name}* (`{ticker}`) TURUN SIGNIFIKAN!\n"
-                        f"├ Harga:     Rp{format_price(price)}\n"
-                        f"├ Perubahan: *{change_pct:+.2f}%*\n"
-                        f"├ Open:      Rp{format_price(open_price)}\n"
-                        f"├ High/Low:  Rp{format_price(high)} / Rp{format_price(low)}\n"
-                        f"├ 52w High:  Rp{format_price(year_high)}\n"
-                        f"├ 52w Low:   Rp{format_price(year_low)}\n"
-                        f"└ Signal:    *{signal}* ⚠️"
+                        f"Harga:     Rp{format_price(price)}\n"
+                        f"Perubahan: *{change_pct:+.2f}%*\n"
+                        f"Open:      Rp{format_price(open_price)}\n"
+                        f"High/Low:  Rp{format_price(high)} / Rp{format_price(low)}\n"
+                        f"52w High:  Rp{format_price(year_high)}\n"
+                        f"52w Low:   Rp{format_price(year_low)}\n"
+                        f"Signal:    *{signal}* ⚠️"
                     )
                 })
 
@@ -326,13 +326,13 @@ def fetch_stock_prices(**context):
                     "name":    name,
                     "message": (
                         f"🚀 *{name}* (`{ticker}`) NAIK SIGNIFIKAN!\n"
-                        f"├ Harga:     Rp{format_price(price)}\n"
-                        f"├ Perubahan: *{change_pct:+.2f}%*\n"
-                        f"├ Open:      Rp{format_price(open_price)}\n"
-                        f"├ High/Low:  Rp{format_price(high)} / Rp{format_price(low)}\n"
-                        f"├ 52w High:  Rp{format_price(year_high)}\n"
-                        f"├ 52w Low:   Rp{format_price(year_low)}\n"
-                        f"└ Signal:    *{signal}* 🎯"
+                        f"Harga:     Rp{format_price(price)}\n"
+                        f"Perubahan: *{change_pct:+.2f}%*\n"
+                        f"Open:      Rp{format_price(open_price)}\n"
+                        f"High/Low:  Rp{format_price(high)} / Rp{format_price(low)}\n"
+                        f"52w High:  Rp{format_price(year_high)}\n"
+                        f"52w Low:   Rp{format_price(year_low)}\n"
+                        f"Signal:    *{signal}* 🎯"
                     )
                 })
 
@@ -410,13 +410,13 @@ def fetch_crypto_prices(**context):
                     "name":    name,
                     "message": (
                         f"🔴 *{name}* (`{ticker}`) CRASH!\n"
-                        f"├ Harga:     ${format_price(price)}\n"
-                        f"├ Perubahan: *{change_pct:+.2f}%*\n"
-                        f"├ Open:      ${format_price(open_price)}\n"
-                        f"├ High/Low:  ${format_price(high)} / ${format_price(low)}\n"
-                        f"├ 52w High:  ${format_price(year_high)}\n"
-                        f"├ 52w Low:   ${format_price(year_low)}\n"
-                        f"└ Signal:    *{signal}* 🚨"
+                        f"Harga:     ${format_price(price)}\n"
+                        f"Perubahan: *{change_pct:+.2f}%*\n"
+                        f"Open:      ${format_price(open_price)}\n"
+                        f"High/Low:  ${format_price(high)} / ${format_price(low)}\n"
+                        f"52w High:  ${format_price(year_high)}\n"
+                        f"52w Low:   ${format_price(year_low)}\n"
+                        f"Signal:    *{signal}* 🚨"
                     )
                 })
 
@@ -427,13 +427,13 @@ def fetch_crypto_prices(**context):
                     "name":    name,
                     "message": (
                         f"🟢 *{name}* (`{ticker}`) PUMP!\n"
-                        f"├ Harga:     ${format_price(price)}\n"
-                        f"├ Perubahan: *{change_pct:+.2f}%*\n"
-                        f"├ Open:      ${format_price(open_price)}\n"
-                        f"├ High/Low:  ${format_price(high)} / ${format_price(low)}\n"
-                        f"├ 52w High:  ${format_price(year_high)}\n"
-                        f"├ 52w Low:   ${format_price(year_low)}\n"
-                        f"└ Signal:    *{signal}* 🚀"
+                        f"Harga:     ${format_price(price)}\n"
+                        f"Perubahan: *{change_pct:+.2f}%*\n"
+                        f"Open:      ${format_price(open_price)}\n"
+                        f"High/Low:  ${format_price(high)} / ${format_price(low)}\n"
+                        f"52w High:  ${format_price(year_high)}\n"
+                        f"52w Low:   ${format_price(year_low)}\n"
+                        f"Signal:    *{signal}* 🚀"
                     )
                 })
 
@@ -552,10 +552,10 @@ def fetch_and_analyze_news(**context):
                         "message": (
                             f"📰 *Sentimen POSITIF* — "
                             f"{', '.join(related)}\n"
-                            f"├ Judul:     _{title}_\n"
-                            f"├ Sumber:    {source_name}\n"
-                            f"├ Sentiment: *{sentiment_score:+.2f}* 😊\n"
-                            f"└ Link: {link}"
+                            f"Judul:     _{title}_\n"
+                            f"Sumber:    {source_name}\n"
+                            f"Sentiment: *{sentiment_score:+.2f}* 😊\n"
+                            f"Link: {link}"
                         )
                     })
                 elif related and sentiment_score <= SENTIMENT_VERY_NEGATIVE:
@@ -566,10 +566,10 @@ def fetch_and_analyze_news(**context):
                         "message": (
                             f"📰 *Sentimen NEGATIF* — "
                             f"{', '.join(related)}\n"
-                            f"├ Judul:     _{title}_\n"
-                            f"├ Sumber:    {source_name}\n"
-                            f"├ Sentiment: *{sentiment_score:+.2f}* 😟\n"
-                            f"└ Link: {link}"
+                            f"Judul:     _{title}_\n"
+                            f"Sumber:    {source_name}\n"
+                            f"Sentiment: *{sentiment_score:+.2f}* 😟\n"
+                            f"Link: {link}"
                         )
                     })
 
@@ -730,18 +730,18 @@ def send_alerts(**context):
         )
         report = (
             f"📊 *Aventra Market Intelligence Report*\n"
-            f"_{now.strftime('%Y-%m-%d %H:%M')} UTC | {wib_hour:02d}:00 WIB_\n\n"
+            f"{now.strftime('%Y-%m-%d %H:%M')} UTC | {wib_hour:02d}:00 WIB_\n\n"
             f"*📈 Data Collected:*\n"
-            f"├ Saham IDX: {summary.get('stocks_indexed', 0)} tickers\n"
-            f"├ Crypto:    {summary.get('crypto_indexed', 0)} coins\n"
-            f"└ Berita:    {summary.get('news_indexed', 0)} artikel\n\n"
+            f"Saham IDX: {summary.get('stocks_indexed', 0)} tickers\n"
+            f"Crypto:    {summary.get('crypto_indexed', 0)} coins\n"
+            f"Berita:    {summary.get('news_indexed', 0)} artikel\n\n"
             f"*🎯 Market Signals:*\n"
-            f"├ Strong Buy:  {summary.get('strong_buy', 0)} aset\n"
-            f"└ Strong Sell: {summary.get('strong_sell', 0)} aset\n\n"
+            f"Strong Buy:  {summary.get('strong_buy', 0)} aset\n"
+            f"Strong Sell: {summary.get('strong_sell', 0)} aset\n\n"
             f"*📰 Sentiment Berita:*\n"
-            f"├ Positif: {summary.get('positive_news', 0)} artikel\n"
-            f"├ Negatif: {summary.get('negative_news', 0)} artikel\n"
-            f"└ Market Mood: {market_mood}\n\n"
+            f"Positif: {summary.get('positive_news', 0)} artikel\n"
+            f"Negatif: {summary.get('negative_news', 0)} artikel\n"
+            f"Market Mood: {market_mood}\n\n"
             f"_Powered by Aventra Market Intelligence_ 🚀"
         )
         send_whatsapp_alert(report)
