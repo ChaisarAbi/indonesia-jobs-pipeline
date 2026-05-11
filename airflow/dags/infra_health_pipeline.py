@@ -611,9 +611,9 @@ def send_alerts(**context):
         send_whatsapp_alert(message)
 
     else:
-        # ── Periodic report every 6 hours ──
+        # ── Periodic report 2x sehari (jam 0 dan 12 UTC = 7 pagi dan 7 malam WIB) ──
         now = datetime.utcnow()
-        if now.minute < 30 and now.hour % 6 == 0:
+        if now.minute < 30 and now.hour % 12 == 0:
             message = (
                 f"✅ *Aventra Infrastructure Report*\n"
                 f"_{now.strftime('%Y-%m-%d %H:%M')} UTC_\n\n"
