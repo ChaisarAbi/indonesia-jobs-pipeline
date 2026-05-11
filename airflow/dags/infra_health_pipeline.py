@@ -10,6 +10,7 @@ import time
 OPENSEARCH_HOST = "aventra-opensearch"
 OPENSEARCH_PORT = 9200
 INDEX_NAME      = "infra-health"
+ALERT_STATE_INDEX = "infra-health-alert-state"  # Separate index for tracking alert states
 
 WAHA_URL        = "http://waha-infra:3000"
 WAHA_API_KEY    = "aventra-infra-123"
@@ -27,7 +28,8 @@ DOMAINS = [
 ]
 
 UPTIME_OK_CODES = [200, 204, 301, 302, 401, 403]
-SSL_WARN_DAYS   = 30
+SSL_WARN_DAYS   = 14       # ⬅ was 30 — warn at 14 days
+SSL_CRITICAL_DAYS = 3      # NEW — critical at 3 days
 ERROR_THRESHOLD = 10
 
 default_args = {
@@ -72,6 +74,128 @@ def ensure_index(client):
             }
         })
         print(f"✅ Created index: {INDEX_NAME}")
+
+
+def ensure_alert_state_index(client):
+    """Ensure the alert-state tracking index exists."""
+    if not client.indices.exists(ALERT_STATE_INDEX):
+        client.indices.create(index=ALERT_STATE_INDEX, body={
+            "settings": {
+                "number_of_shards": 1,
+                "number_of_replicas": 0,
+            },
+            "mappings": {
+                "properties": {
+                    "domain":           {"type": "keyword"},
+                    "issue_key":        {"type": "keyword"},  # e.g. "ssl|air.aventra.my.id"
+                    "last_status":      {"type": "keyword"},  # last alerted status
+                    "last_alerted_at":  {"type": "date"},     # when we last sent an alert
+                    "last_recovered_at":{"type": "date"},     # when it last recovered
+                }
+            }
+        })
+        print(f"✅ Created index: {ALERT_STATE_INDEX}")
+
+
+def get_alert_state(client, issue_key: str):
+    """Return the stored alert state dict for an issue key, or None."""
+    try:
+        response = client.search(
+            index=ALERT_STATE_INDEX,
+            body={
+                "query": {"term": {"issue_key": issue_key}},
+                "size": 1,
+                "sort": [{"last_alerted_at": {"order": "desc"}}],
+            },
+            ignore_unavailable=True,
+        )
+        hits = response.get("hits", {}).get("hits", [])
+        if hits:
+            return hits[0]["_source"]
+    except Exception:
+        pass
+    return None
+
+
+def store_alert_state(client, issue_key: str, domain: str, status: str):
+    """Upsert the alert state for an issue key."""
+    try:
+        # Delete old doc first then index new one (simple upsert)
+        client.delete_by_query(
+            index=ALERT_STATE_INDEX,
+            body={"query": {"term": {"issue_key": issue_key}}},
+            refresh=True,
+            ignore_unavailable=True,
+        )
+    except Exception:
+        pass
+    client.index(
+        index=ALERT_STATE_INDEX,
+        body={
+            "domain":           domain,
+            "issue_key":        issue_key,
+            "last_status":      status,
+            "last_alerted_at":  datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S"),
+            "last_recovered_at": None,
+        },
+        refresh=True,
+    )
+
+
+def store_recovery_state(client, issue_key: str, domain: str):
+    """Mark an issue as recovered."""
+    try:
+        client.delete_by_query(
+            index=ALERT_STATE_INDEX,
+            body={"query": {"term": {"issue_key": issue_key}}},
+            refresh=True,
+            ignore_unavailable=True,
+        )
+    except Exception:
+        pass
+    client.index(
+        index=ALERT_STATE_INDEX,
+        body={
+            "domain":            domain,
+            "issue_key":         issue_key,
+            "last_status":       "OK",
+            "last_alerted_at":   None,
+            "last_recovered_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S"),
+        },
+        refresh=True,
+    )
+
+
+def should_alert(client, issue_key: str, status: str) -> bool:
+    """
+    Determine if we should send an alert for this issue.
+    - CRITICAL / DOWN / ANOMALY: always alert
+    - WARNING: only alert once per 24h
+    - If status changed: always alert
+    """
+    last = get_alert_state(client, issue_key)
+    if last is None:
+        return True  # First time — alert
+
+    last_status = last.get("last_status")
+    last_alerted_at_str = last.get("last_alerted_at")
+
+    # Status changed — always alert (including recovery detection)
+    if last_status != status:
+        return True
+
+    # Same status, only alert if it's CRITICAL/DOWN/ANOMALY
+    if status in ["CRITICAL", "DOWN", "SSL_ERROR", "ERROR", "ANOMALY"]:
+        return True
+
+    # WARNING: suppress repeats within 24h
+    if last_alerted_at_str:
+        last_alerted_at = datetime.strptime(last_alerted_at_str, "%Y-%m-%dT%H:%M:%S")
+        hours_since = (datetime.utcnow() - last_alerted_at).total_seconds() / 3600
+        if hours_since < 24:
+            return False
+
+    return True  # Past 24h cooldown for WARNING
 
 
 def send_whatsapp_alert(message: str):
@@ -203,12 +327,13 @@ def check_ssl(**context):
                     days_left  = (expiry_dt - datetime.utcnow()).days
 
                     status = "OK"
-                    if days_left <= 7:
+                    if days_left <= SSL_CRITICAL_DAYS:
                         status = "CRITICAL"
-                        issues.append(f"🚨 {domain} SSL expires in {days_left} days!")
+                        issues.append(f"🚨 {domain} SSL expires in {days_left} days! (CRITICAL)")
                     elif days_left <= SSL_WARN_DAYS:
                         status = "WARNING"
                         issues.append(f"⚠️ {domain} SSL expires in {days_left} days")
+                    # else OK — no issue added
 
                     results.append({
                         "check_type":    "ssl",
@@ -372,33 +497,121 @@ def aggregate_and_index(**context):
 
 
 # ════════════════════════════════════════════════════════════════
-# TASK 5 — Send WhatsApp Alert
+# TASK 5 — Send WhatsApp Alert (with deduplication + WARNING suppression)
 # ════════════════════════════════════════════════════════════════
 def send_alerts(**context):
+    uptime_results = context["ti"].xcom_pull(key="uptime_results", task_ids="check_uptime") or []
+    ssl_results    = context["ti"].xcom_pull(key="ssl_results",    task_ids="check_ssl") or []
+    log_results    = context["ti"].xcom_pull(key="log_results",    task_ids="check_log_anomaly") or []
+
     uptime_issues = context["ti"].xcom_pull(key="uptime_issues", task_ids="check_uptime") or []
     ssl_issues    = context["ti"].xcom_pull(key="ssl_issues",    task_ids="check_ssl") or []
     log_issues    = context["ti"].xcom_pull(key="log_issues",    task_ids="check_log_anomaly") or []
     summary       = context["ti"].xcom_pull(key="summary",       task_ids="aggregate_and_index") or {}
 
-    all_issues = uptime_issues + ssl_issues + log_issues
+    client = get_opensearch_client()
+    ensure_alert_state_index(client)
 
-    # Kirim alert kalau ada issues
-    if all_issues:
-        message = (
-            f"🚨 *Aventra Infrastructure Alert*\n"
-            f"_{datetime.utcnow().strftime('%Y-%m-%d %H:%M')} UTC_\n\n"
-            f"*Issues Detected:*\n"
-            f"{chr(10).join(all_issues)}\n\n"
+    # ── Build a map: domain → current status from results ──
+    # This helps detect recoveries (was DOWN, now UP)
+    current_states = {}
+    for r in uptime_results:
+        current_states[f"uptime|{r['domain']}"] = r["status"]
+    for r in ssl_results:
+        current_states[f"ssl|{r['domain']}"] = r["status"]
+    for r in log_results:
+        current_states[f"log|{r['domain']}"] = r["status"]
+
+    # ── Filter issues with dedup + suppression ──
+    alerts_to_send = []
+    recoveries     = []
+    raw_issues     = []
+
+    # Process uptime issues
+    for issue in uptime_issues:
+        raw_issues.append(issue)
+        domain = issue.split(" ")[0].replace("❌", "").replace("🔒", "").strip()
+        issue_key = f"uptime|{domain}"
+        status = current_states.get(issue_key, "DOWN")
+
+        # Check if this was previously failing and now it's OK → recovery
+        last = get_alert_state(client, issue_key)
+        if last and last.get("last_status") in ["DOWN", "SSL_ERROR", "ERROR"] and status == "UP":
+            recoveries.append(f"✅ {domain} is back UP (recovered)")
+
+        if should_alert(client, issue_key, status):
+            alerts_to_send.append(issue)
+            store_alert_state(client, issue_key, domain, status)
+        else:
+            print(f"🔇 Suppressed duplicate alert for {issue_key} ({status})")
+
+    # Process SSL issues
+    for issue in ssl_issues:
+        raw_issues.append(issue)
+        # Extract domain from various issue formats
+        words = issue.split()
+        domain = words[1] if len(words) > 1 else ""
+        issue_key = f"ssl|{domain}"
+        status = current_states.get(issue_key, "WARNING")
+
+        # Check recovery (was CRITICAL/WARNING, now OK)
+        last = get_alert_state(client, issue_key)
+        if last and last.get("last_status") in ["CRITICAL", "WARNING", "ERROR"] and status == "OK":
+            recoveries.append(f"🔒 {domain} SSL renewed (recovered)")
+
+        if should_alert(client, issue_key, status):
+            alerts_to_send.append(issue)
+            store_alert_state(client, issue_key, domain, status)
+        else:
+            print(f"🔇 Suppressed duplicate alert for {issue_key} ({status})")
+
+    # Process log issues
+    for issue in log_issues:
+        raw_issues.append(issue)
+        issue_key = "log|system_logs"
+        status = current_states.get(issue_key, "WARNING")
+
+        last = get_alert_state(client, issue_key)
+        if last and last.get("last_status") in ["ANOMALY", "WARNING", "ERROR"] and status == "OK":
+            recoveries.append(f"📋 System logs recovered (back to normal)")
+
+        if should_alert(client, issue_key, status):
+            alerts_to_send.append(issue)
+            store_alert_state(client, issue_key, "system_logs", status)
+        else:
+            print(f"🔇 Suppressed duplicate alert for {issue_key} ({status})")
+
+    # ── Send alerts ──
+    if alerts_to_send or recoveries:
+        message_parts = []
+
+        if alerts_to_send:
+            message_parts.append(
+                f"🚨 *Aventra Infrastructure Alert*\n"
+                f"_{datetime.utcnow().strftime('%Y-%m-%d %H:%M')} UTC_\n\n"
+                f"*Issues Detected:*\n"
+                f"{chr(10).join(alerts_to_send)}"
+            )
+
+        if recoveries:
+            message_parts.append(
+                f"✅ *Recoveries:*\n"
+                f"{chr(10).join(recoveries)}"
+            )
+
+        message_parts.append(
             f"*Summary:*\n"
             f"✅ Uptime: {summary.get('uptime_up', 0)}/{summary.get('uptime_total', 0)} domains up\n"
             f"🔒 SSL: {summary.get('ssl_critical', 0)} certificates need attention\n"
             f"📋 Logs: {summary.get('log_issues', 0)} anomalies detected"
         )
-        print(f"🚨 Sending alert for {len(all_issues)} issues...")
+
+        message = "\n\n".join(message_parts)
+        print(f"🚨 Sending alert for {len(alerts_to_send)} issues + {len(recoveries)} recoveries...")
         send_whatsapp_alert(message)
 
     else:
-        # Kirim periodic report setiap 6 jam (jam 0, 6, 12, 18 UTC)
+        # ── Periodic report every 6 hours ──
         now = datetime.utcnow()
         if now.minute < 30 and now.hour % 6 == 0:
             message = (
